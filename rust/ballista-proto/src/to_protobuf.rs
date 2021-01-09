@@ -293,10 +293,24 @@ impl TryInto<protobuf::LogicalExprNode> for &Expr {
                 }));
                 Ok(expr)
             }
-            _ => Err(BallistaProtoError::General(format!(
-                "logical expr to_proto {:?}",
-                self
-            ))),
+            Expr::ScalarVariable(_) => unimplemented!(),
+            Expr::ScalarFunction { .. } => unimplemented!(),
+            Expr::ScalarUDF { .. } => unimplemented!(),
+            Expr::AggregateUDF { .. } => unimplemented!(),
+            Expr::Not(_) => unimplemented!(),
+            Expr::IsNull(_) => unimplemented!(),
+            Expr::IsNotNull(_) => unimplemented!(),
+            Expr::Between { .. } => unimplemented!(),
+            Expr::Negative(_) => unimplemented!(),
+            Expr::Case { .. } => unimplemented!(),
+            Expr::Cast { .. } => unimplemented!(),
+            Expr::Sort { .. } => unimplemented!(),
+            Expr::InList { .. } => unimplemented!(),
+            Expr::Wildcard => unimplemented!(),
+            // _ => Err(BallistaProtoError::General(format!(
+            //     "logical expr to_proto {:?}",
+            //     self
+            // ))),
         }
     }
 }
