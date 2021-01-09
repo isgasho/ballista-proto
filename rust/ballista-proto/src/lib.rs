@@ -15,13 +15,21 @@
 //! This crate contains code generated from the Ballista Protocol Buffer Definition as well
 //! as convenience code for interacting with the generated code.
 
+pub const BALLISTA_PROTO_VERSION: &str = env!("CARGO_PKG_VERSION");
+
 // include the generated protobuf source as a submodule
 #[allow(clippy::all)]
 pub mod protobuf {
     include!(concat!(env!("OUT_DIR"), "/ballista.protobuf.rs"));
 }
 
-pub const BALLISTA_PROTO_VERSION: &str = env!("CARGO_PKG_VERSION");
+pub mod to_protobuf;
+
+/// Error
+#[derive(Debug)]
+pub enum BallistaProtoError {
+    General(String),
+}
 
 /// Create an empty ExprNode
 pub fn empty_expr_node() -> protobuf::LogicalExprNode {
@@ -75,7 +83,6 @@ pub fn empty_physical_plan_node() -> protobuf::PhysicalPlanNode {
         hash_aggregate: None,
     }
 }
-
 
 #[cfg(test)]
 mod tests {

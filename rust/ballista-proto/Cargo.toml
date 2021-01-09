@@ -14,5 +14,8 @@ include = ["build.rs", "src/**/*", "Cargo.toml", "proto/ballista.proto"]
 prost = "0.6"
 prost-types = "0.6"
 
+arrow = { git = "https://github.com/andygrove/arrow", branch="expose-table-provider-data" }
+datafusion = { git = "https://github.com/andygrove/arrow", branch="expose-table-provider-data" }
+
 [build-dependencies]
 prost-build = { version = "0.6.1" }
