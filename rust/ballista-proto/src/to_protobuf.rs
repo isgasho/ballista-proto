@@ -22,7 +22,7 @@ use crate::{empty_expr_node, empty_logical_plan_node, protobuf, BallistaProtoErr
 
 use arrow::datatypes::{DataType, Schema};
 use datafusion::datasource::parquet::ParquetTable;
-use datafusion::datasource::{CsvFile, TableProvider};
+use datafusion::datasource::CsvFile;
 use datafusion::logical_plan::{Expr, LogicalPlan};
 use datafusion::physical_plan::aggregates::AggregateFunction;
 use datafusion::scalar::ScalarValue;
@@ -35,39 +35,46 @@ impl TryInto<protobuf::LogicalPlanNode> for &LogicalPlan {
             LogicalPlan::TableScan {
                 table_name,
                 source,
-                projection,
                 projected_schema,
                 filters,
+                ..
             } => {
                 let schema = source.schema();
                 let source = source.as_any();
-                let projection = projection.as_ref().map(|column_indices| {
-                    let columns: Vec<String> = column_indices
-                        .iter()
-                        .map(|i| schema.field(*i).name().clone())
-                        .collect();
-                    protobuf::ProjectionColumns { columns }
-                });
+                let columns = projected_schema
+                    .fields()
+                    .iter()
+                    .map(|f| f.name().to_owned())
+                    .collect();
+                let projection = Some(protobuf::ProjectionColumns { columns });
                 let schema: protobuf::Schema = schema.as_ref().try_into()?;
+
+                let filters: Vec<protobuf::LogicalExprNode> = filters
+                    .iter()
+                    .map(|filter| filter.try_into())
+                    .collect::<Result<Vec<_>, _>>()?;
 
                 let mut node = empty_logical_plan_node();
 
                 if let Some(parquet) = source.downcast_ref::<ParquetTable>() {
-                    node.scan = Some(protobuf::ScanNode {
+                    node.parquet_scan = Some(protobuf::ParquetTableScanNode {
+                        table_name: table_name.to_owned(),
                         path: parquet.path().to_owned(),
                         projection,
                         schema: Some(schema),
-                        has_header: false,
-                        file_format: "parquet".to_owned(),
+                        filters,
                     });
                     Ok(node)
                 } else if let Some(csv) = source.downcast_ref::<CsvFile>() {
-                    node.scan = Some(protobuf::ScanNode {
+                    node.csv_scan = Some(protobuf::CsvTableScanNode {
+                        table_name: table_name.to_owned(),
                         path: csv.path().to_owned(),
                         projection,
                         schema: Some(schema),
                         has_header: csv.has_header(),
-                        file_format: "csv".to_owned(),
+                        delimiter: csv.delimiter().to_string(),
+                        file_extension: csv.file_extension().to_string(),
+                        filters,
                     });
                     Ok(node)
                 } else {

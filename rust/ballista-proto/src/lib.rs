@@ -61,7 +61,8 @@ pub fn empty_expr_node() -> protobuf::LogicalExprNode {
 /// Create an empty LogicalPlanNode
 pub fn empty_logical_plan_node() -> protobuf::LogicalPlanNode {
     protobuf::LogicalPlanNode {
-        scan: None,
+        csv_scan: None,
+        parquet_scan: None,
         input: None,
         projection: None,
         selection: None,
