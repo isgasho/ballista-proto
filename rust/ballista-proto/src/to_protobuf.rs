@@ -152,10 +152,23 @@ impl TryInto<protobuf::LogicalPlanNode> for &LogicalPlan {
                 }));
                 Ok(node)
             }
-            _ => Err(BallistaProtoError::General(format!(
-                "logical plan to_proto {:?}",
-                self
-            ))),
+            LogicalPlan::Limit { input, n } => {
+                let input: protobuf::LogicalPlanNode = input.as_ref().try_into()?;
+                let mut node = empty_logical_plan_node();
+                node.input = Some(Box::new(input));
+                node.limit = Some(protobuf::LimitNode { limit: *n as u32 });
+                Ok(node)
+            }
+            LogicalPlan::Sort { .. } => unimplemented!(),
+            LogicalPlan::Repartition { .. } => unimplemented!(),
+            LogicalPlan::EmptyRelation { .. } => unimplemented!(),
+            LogicalPlan::CreateExternalTable { .. } => unimplemented!(),
+            LogicalPlan::Explain { .. } => unimplemented!(),
+            LogicalPlan::Extension { .. } => unimplemented!(),
+            // _ => Err(BallistaProtoError::General(format!(
+            //     "logical plan to_proto {:?}",
+            //     self
+            // ))),
         }
     }
 }
