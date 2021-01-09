@@ -68,6 +68,7 @@ pub fn empty_logical_plan_node() -> protobuf::LogicalPlanNode {
         selection: None,
         limit: None,
         aggregate: None,
+        join: None,
     }
 }
 

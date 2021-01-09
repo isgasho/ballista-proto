@@ -85,6 +85,7 @@ message LogicalPlanNode {
   SelectionNode selection = 21;
   LimitNode limit = 22;
   AggregateNode aggregate = 23;
+  JoinNode join = 24;
 }
 
 message ProjectionColumns {
@@ -121,6 +122,20 @@ message SelectionNode {
 message AggregateNode {
   repeated LogicalExprNode group_expr = 1;
   repeated LogicalExprNode aggr_expr = 2;
+}
+
+enum JoinType {
+  INNER = 0;
+  LEFT = 1;
+  RIGHT = 2;
+}
+
+message JoinNode {
+  LogicalPlanNode left = 1;
+  LogicalPlanNode right = 2;
+  JoinType join_type = 3;
+  repeated string left_join_column = 4;
+  repeated string right_join_column = 5;
 }
 
 message LimitNode {

@@ -23,7 +23,7 @@ use crate::{empty_expr_node, empty_logical_plan_node, protobuf, BallistaProtoErr
 use arrow::datatypes::{DataType, Schema};
 use datafusion::datasource::parquet::ParquetTable;
 use datafusion::datasource::CsvFile;
-use datafusion::logical_plan::{Expr, LogicalPlan};
+use datafusion::logical_plan::{Expr, JoinType, LogicalPlan};
 use datafusion::physical_plan::aggregates::AggregateFunction;
 use datafusion::scalar::ScalarValue;
 
@@ -124,6 +124,32 @@ impl TryInto<protobuf::LogicalPlanNode> for &LogicalPlan {
                         .map(|expr| expr.try_into())
                         .collect::<Result<Vec<_>, BallistaProtoError>>()?,
                 });
+                Ok(node)
+            }
+            LogicalPlan::Join {
+                left,
+                right,
+                on,
+                join_type,
+                ..
+            } => {
+                let left: protobuf::LogicalPlanNode = left.as_ref().try_into()?;
+                let right: protobuf::LogicalPlanNode = right.as_ref().try_into()?;
+                let join_type = match join_type {
+                    JoinType::Inner => protobuf::JoinType::Inner,
+                    JoinType::Left => protobuf::JoinType::Left,
+                    JoinType::Right => protobuf::JoinType::Right,
+                };
+                let left_join_column = on.iter().map(|on| on.0.to_owned()).collect();
+                let right_join_column = on.iter().map(|on| on.1.to_owned()).collect();
+                let mut node = empty_logical_plan_node();
+                node.join = Some(Box::new(protobuf::JoinNode {
+                    left: Some(Box::new(left)),
+                    right: Some(Box::new(right)),
+                    join_type: join_type.into(),
+                    left_join_column,
+                    right_join_column,
+                }));
                 Ok(node)
             }
             _ => Err(BallistaProtoError::General(format!(
@@ -240,12 +266,12 @@ impl TryInto<protobuf::LogicalExprNode> for &Expr {
                 let mut expr = empty_expr_node();
 
                 let aggr_function = match fun {
-                    AggregateFunction::Min => Ok(protobuf::AggregateFunction::Min),
-                    AggregateFunction::Max => Ok(protobuf::AggregateFunction::Max),
-                    AggregateFunction::Sum => Ok(protobuf::AggregateFunction::Sum),
-                    AggregateFunction::Avg => Ok(protobuf::AggregateFunction::Avg),
-                    AggregateFunction::Count => Ok(protobuf::AggregateFunction::Count),
-                }?;
+                    AggregateFunction::Min => protobuf::AggregateFunction::Min,
+                    AggregateFunction::Max => protobuf::AggregateFunction::Max,
+                    AggregateFunction::Sum => protobuf::AggregateFunction::Sum,
+                    AggregateFunction::Avg => protobuf::AggregateFunction::Avg,
+                    AggregateFunction::Count => protobuf::AggregateFunction::Count,
+                };
 
                 let arg = &args[0];
                 expr.aggregate_expr = Some(Box::new(protobuf::AggregateExprNode {
