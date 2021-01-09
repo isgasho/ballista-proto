@@ -12,6 +12,9 @@ repositories {
     jcenter()
 }
 
+group = "org.ballistacompute"
+version = "0.1.0"
+
 sourceSets {
     main {
         proto {
